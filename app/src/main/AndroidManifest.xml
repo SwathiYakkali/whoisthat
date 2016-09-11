@@ -27,6 +27,21 @@
             </intent-filter>
         </service>
 
+        <receiver
+            android:name=".MainActivity$RecognizeReceiver"
+            >
+            <intent-filter android:priority="2">
+                <action android:name="whoisthat.Recognize.Speak" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".MainActivity$SpeakReceiver"
+            >
+            <intent-filter android:priority="1">
+                <action android:name="whoisthat.Recognize.Speak" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings"></activity>

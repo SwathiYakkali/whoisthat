@@ -21,13 +21,15 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import java.util.Locale;
+
 public class MainActivity extends AppCompatActivity {
 
     private final int CHECK_CODE = 0x1;
     private final int LONG_DURATION = 5000;
     private final int SHORT_DURATION = 1200;
 
-    private Speaker speaker;
+    private static Speaker speaker;
 
     private ToggleButton toggle;
     private CompoundButton.OnCheckedChangeListener toggleListener;
@@ -36,6 +38,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView smsSender;
 
     private BroadcastReceiver smsReceiver;
+
+    private static TextToSpeech t1;
+    private static SpeechRecognizer speechRecognizer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,15 +72,43 @@ public class MainActivity extends AppCompatActivity {
 
 //        launchSpeechRecognizer();
 
-        IntentFilter recognizeFilter = new IntentFilter();
-        recognizeFilter.addAction("whoisthat.Recognize");
-        RecognizeReceiver recognizeReceiver = new RecognizeReceiver();
-        registerReceiver(recognizeReceiver, recognizeFilter);
+//        IntentFilter recognizeFilter = new IntentFilter();
+//        recognizeFilter.addAction("whoisthat.Recognize");
+//        RecognizeReceiver recognizeReceiver = new RecognizeReceiver();
+//        registerReceiver(recognizeReceiver, recognizeFilter);
+//
+//        IntentFilter speakFilter = new IntentFilter();
+//        speakFilter.addAction(("whoisthat.Speak"));
+//        SpeakReceiver speakReceiver = new SpeakReceiver();
+//        registerReceiver(speakReceiver, speakFilter);
 
-        IntentFilter speakFilter = new IntentFilter();
-        speakFilter.addAction(("whoisthat.Speak"));
-        SpeakReceiver speakReceiver = new SpeakReceiver();
-        registerReceiver(speakReceiver, speakFilter);
+        t1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener(){
+
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR){
+                    t1.setLanguage(Locale.US);
+                }
+            }
+        });
+
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
+        VoiceCommandListener voiceCommandListener = new VoiceCommandListener();
+        speechRecognizer.setRecognitionListener(voiceCommandListener);
+
+        IntentFilter recognizeAndSpeakFilter = new IntentFilter();
+        recognizeAndSpeakFilter.addAction("whoisthat.Recognize.Speak");
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Bundle results = getResultExtras(true);
+                String hierarchy = results.getString("hierarchy");
+
+                results.putString("hierarchy", hierarchy);
+                Log.d("MAIN ACTIVITY", "***Inside register receiver****");
+
+            }
+        }, recognizeAndSpeakFilter);
     }
 
     private void checkTTS(){
@@ -156,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.e("RECOGNISE RECEIVER", "recognise received message ******");
             String message = intent.getStringExtra("message_to_speak");
             launchSpeechRecognizer(context, message);
 //            Intent speakIntent = new Intent("whoisthat.Speak");
@@ -164,10 +198,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void launchSpeechRecognizer(Context context, String message){
-            SpeechRecognizer speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
+//            SpeechRecognizer speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
 //            Speaker speaker = new Speaker(context);
-            VoiceCommandListener voiceCommandListener = new VoiceCommandListener();
-            speechRecognizer.setRecognitionListener(voiceCommandListener);
+
+
             speechRecognizer.startListening(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH));
 
         }
@@ -175,17 +209,18 @@ public class MainActivity extends AppCompatActivity {
 
     public static class SpeakReceiver extends BroadcastReceiver {
 
-        private Speaker speaker;
-
+//        private Speaker speaker;
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.e("SPEAK RECEIVER", "received message ******");
-            speaker = new Speaker(context);
+            Log.e("SPEAK RECEIVER", "speak received message ******");
+//            speaker = new Speaker(context);
 //            speaker.allow(true);
-            speaker.speak(intent.getStringExtra("message_to_speak"));
+            t1.playSilence(5000, TextToSpeech.QUEUE_ADD, null);
+            t1.speak(intent.getStringExtra("message_to_speak"),TextToSpeech.QUEUE_FLUSH, null);
 
         }
+
     }
 
 }

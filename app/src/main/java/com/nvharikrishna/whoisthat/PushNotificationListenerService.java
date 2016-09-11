@@ -1,11 +1,13 @@
 package com.nvharikrishna.whoisthat;
 
+import android.app.Activity;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.renderscript.RenderScript;
@@ -75,9 +77,19 @@ public class PushNotificationListenerService extends NotificationListenerService
         Log.d(TAG, "SBN Package Name" + sbn.getPackageName());
         Log.d(TAG, "Notification Posted");
 
-        Intent pushNotifIntent = new Intent("whoisthat.Recognize");
+        Intent pushNotifIntent = new Intent("whoisthat.Recognize.Speak");
         pushNotifIntent.putExtra("message_to_speak", "Hello how are you");
-        sendBroadcast(pushNotifIntent);
+//        sendBroadcast(pushNotifIntent);
+        sendOrderedBroadcast(pushNotifIntent, null, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Bundle results = getResultExtras(true);
+                String hierarchy = results.getString("hierarchy");
+
+                System.out.println(hierarchy);
+                Log.d(TAG, "Final Receiver");
+            }
+        }, null, Activity.RESULT_OK, null, null);
     }
 
     @Override
